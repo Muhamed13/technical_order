@@ -22,6 +22,9 @@ Technical Order Management
         'security/ir.model.access.csv',
 
         'data/technical_order_sequence.xml',
+
+        'views/technical_order_view.xml',
+        'views/base_menu.xml',
     ],
 
     'application': True,

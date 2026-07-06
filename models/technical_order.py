@@ -32,6 +32,30 @@ class TechnicalOrder(models.Model):
 
         return super().create(vals)
 
+    def action_to_be_approved(self):
+        self.write({
+            'state': 'to_be_approved'
+        })
+
+    def action_cancel(self):
+        self.write({
+            'state': 'cancel'
+        })
+
+    def action_approved(self):
+        self.write({
+            'state': 'approved'
+        })
+
+    def action_rejected(self):
+        self.write({
+            'state': 'rejected'
+        })
+
+    def action_draft(self):
+        self.write({
+            'state': 'draft'
+        })
 
 
 

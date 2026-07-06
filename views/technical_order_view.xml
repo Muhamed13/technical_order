@@ -1,0 +1,124 @@
+<odoo>
+
+    <!-- Tree View -->
+    <record id="technical_order_view_tree" model="ir.ui.view">
+        <field name="name">technical.order.tree</field>
+        <field name="model">technical.order</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence"/>
+                <field name="request_name"/>
+                <field name="customer_id"/>
+                <field name="requested_by"/>
+                <field name="start_date"/>
+                <field name="total_price"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="technical_order_view_form" model="ir.ui.view">
+        <field name="name">technical.order.form</field>
+        <field name="model">technical.order</field>
+        <field name="arch" type="xml">
+            <form>
+
+                <header>
+
+                    <!-- Draft -->
+                    <button name="action_to_be_approved"
+                            type="object"
+                            string="Submit for Approval"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+
+                    <button name="action_cancel"
+                            type="object"
+                            string="Cancel"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+
+                    <!-- To Be Approved -->
+                    <button name="action_approved"
+                            type="object"
+                            string="Approve"
+                            class="btn-primary"
+                            invisible="state != 'to_be_approved'"/>
+
+                    <button name="action_rejected"
+                            type="object"
+                            string="Reject"
+                            class="btn-primary"
+                            invisible="state != 'to_be_approved'"/>
+
+                    <!-- Cancel -->
+                    <button name="action_draft"
+                            type="object"
+                            string="Reset to Draft"
+                            class="btn-primary"
+                            invisible="state != 'cancel'"/>
+                    
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,to_be_approved,approved,rejected,cancel"
+                    />
+                </header>
+
+                <sheet>
+
+                    <h1>
+                        <field name="request_name"/>
+                    </h1>
+
+                    <group>
+                        <group>
+                            <field name="sequence" readonly="1"/>
+                            <field name="requested_by" readonly="1"/>
+                            <field name="start_date"/>
+                        </group>
+
+                        <group>
+                            <field name="state" readonly="1"/>
+                            <field name="customer_id"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="total_price" readonly="1"/>
+                    </group>
+
+                    <group>
+                        <field name="rejection_reason"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Order Lines">
+                            <field name="order_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="description"/>
+                                    <field name="quantity"/>
+                                    <field name="price"/>
+                                    <field name="line_total" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="technical_order_action" model="ir.actions.act_window">
+        <field name="name">Technical Orders</field>
+        <field name="res_model">technical.order</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>
