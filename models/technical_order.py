@@ -47,10 +47,6 @@ class TechnicalOrder(models.Model):
             'state': 'approved'
         })
 
-    def action_rejected(self):
-        self.write({
-            'state': 'rejected'
-        })
 
     def action_draft(self):
         self.write({

@@ -25,6 +25,8 @@ Technical Order Management
 
         'views/technical_order_view.xml',
         'views/base_menu.xml',
+
+        'wizard/technical_order_wizard.xml',
     ],
 
     'application': True,

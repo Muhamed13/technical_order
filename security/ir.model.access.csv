@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_technical_order,access_technical_order,model_technical_order,,1,1,1,1
-access_technical_order_line,technical_order_line,model_technical_order_line,,1,1,1,1
+access_technical_order_line,access_technical_order_line,model_technical_order_line,,1,1,1,1
+access_technical_order_reject_wizard,access_technical_order_reject_wizard,model_technical_order_reject_wizard,,1,1,1,1
