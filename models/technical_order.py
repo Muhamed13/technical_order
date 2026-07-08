@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class TechnicalOrder(models.Model):
@@ -25,8 +26,28 @@ class TechnicalOrder(models.Model):
 
     ], default='draft', string="State")
 
+    @api.constrains('start_date', 'end_date')
+    def _check_dates(self):
+        """
+           Validate that the end date is not earlier than the start date.
+        """
+        for rec in self:
+            if rec.end_date and rec.end_date < rec.start_date:
+                raise ValidationError(
+                    _("End Date cannot be earlier than Start Date.")
+                )
+
+    @api.depends('order_line_ids.line_total')
+    def _compute_total_price(self):
+        """Compute the total amount of the technical order."""
+        for order in self:
+            order.total_price = sum(order.order_line_ids.mapped('line_total'))
+
+
     @api.model
     def create(self, vals):
+        """Generate sequence before creating a technical order."""
+
         if vals.get('sequence', 'New') == 'New':
             vals['sequence'] = self.env['ir.sequence'].next_by_code('technical.order')
 
@@ -43,10 +64,47 @@ class TechnicalOrder(models.Model):
         })
 
     def action_approved(self):
+        """
+        Approve the technical order and notify all Sales Managers by email.
+        """
+
+        self.ensure_one()
+
         self.write({
             'state': 'approved'
         })
 
+        group = self.env.ref('sales_team.group_sale_manager')
+
+        for user in group.users:
+            email = user.partner_id.email
+
+            if not email:
+                continue
+
+            body_html = f"""
+            <p>Hello {user.name},</p>
+
+            <p>
+                Technical Order <strong>{self.request_name}</strong> has been approved.
+            </p>
+
+            <p>
+                <strong>Customer:</strong> {self.customer_id.name}<br/>
+                <strong>Start Date:</strong> {self.start_date}<br/>
+                <strong>End Date:</strong> {self.end_date}
+            </p>
+
+            <p>Regards,</p>
+            """
+
+            mail = self.env['mail.mail'].create({
+                'email_to': email,
+                'subject': f'Technical Order {self.request_name} Approved',
+                'body_html': body_html,
+            })
+
+            mail.send()
 
     def action_draft(self):
         self.write({
@@ -63,5 +121,26 @@ class TechnicalOrderLine(models.Model):
     description = fields.Char(string="Description")
     quantity = fields.Float(string="Quantity", default=1)
     price = fields.Float(string="Price")
-    line_total =fields.Float(string="Total Price", compute="_compute_line_total", store=True)
+    line_total = fields.Float(string="Total Price", compute="_compute_line_total", store=True)
     order_id = fields.Many2one('technical.order', string="Order", required=True, ondelete='cascade')
+
+    @api.depends('quantity', 'price')
+    def _compute_line_total(self):
+        """Compute the total amount for each technical order line."""
+        for line in self:
+            line.line_total = line.quantity * line.price
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Update the line price when the selected product changes."""
+        if self.product_id:
+            self.price = self.product_id.list_price
+
+    @api.constrains('quantity')
+    def _check_quantity(self):
+        """Ensure the quantity is greater than zero."""
+        for line in self:
+            if line.quantity <= 0:
+                raise ValidationError(
+                    _("Quantity must be greater than 0.")
+                )

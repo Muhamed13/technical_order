@@ -16,6 +16,7 @@ Technical Order Management
     'depends': [
         'base',
         'product',
+        'mail',
 ],
 
     'data': [
