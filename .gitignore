@@ -4,6 +4,7 @@ __pycache__/
 
 # Virtual Environment
 venv/
+.env
 
 # Odoo
 *.log
@@ -12,6 +13,6 @@ venv/
 .vscode/
 .idea/
 
-# OS
+# Operating System
 .DS_Store
 Thumbs.db
