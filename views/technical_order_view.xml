@@ -5,7 +5,7 @@
         <field name="name">technical.order.tree</field>
         <field name="model">technical.order</field>
         <field name="arch" type="xml">
-            <tree>
+        <tree default_order="sequence desc">
                 <field name="sequence"/>
                 <field name="request_name"/>
                 <field name="customer_id"/>
@@ -52,21 +52,47 @@
                             class="btn-secondary"
                             invisible="state != 'to_be_approved'"/>
 
+                    <!-- Approved -->
+                    <button name="action_create_sale_order"
+                            type="object"
+                            string="Create SO"
+                            class="btn-primary"
+                            invisible="state != 'approved' or not has_remaining_qty"/>
+
                     <!-- Cancel -->
                     <button name="action_draft"
                             type="object"
                             string="Reset to Draft"
                             class="btn-primary"
                             invisible="state != 'cancel'"/>
-                    
+
                     <field
                         name="state"
                         widget="statusbar"
-                        statusbar_visible="draft,to_be_approved,approved,rejected,cancel"
-                    />
+                        statusbar_visible="draft,to_be_approved,approved,rejected,cancel"/>
+
                 </header>
 
                 <sheet>
+
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+
+                        <button
+                            name="action_view_sale_orders"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-shopping-cart"
+                            invisible="state != 'approved'">
+
+                            <field
+                                name="sale_order_count"
+                                widget="statinfo"
+                                string="Sales Orders"/>
+
+                        </button>
+
+                    </div>
 
                     <h1>
                         <field name="request_name"
@@ -87,6 +113,7 @@
                                    readonly="state in ('approved', 'rejected', 'cancel')"/>
                             <field name="end_date"
                                    readonly="state in ('approved', 'rejected', 'cancel')"/>
+                            <field name="has_remaining_qty" invisible="1"/>
                         </group>
                     </group>
 

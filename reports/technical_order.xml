@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Action -->
+    <record id="action_technical_order_report" model="ir.actions.report">
+        <field name="name">Technical Order Report</field>
+        <field name="model">technical.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">technical_order.technical_order_report_template</field>
+        <field name="report_file">technical_order.technical_order_report_template</field>
+        <field name="binding_model_id" ref="model_technical_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Report Template -->
+    <template id="technical_order_report_template">
+
+        <t t-call="web.html_container">
+
+            <t t-foreach="docs" t-as="o">
+
+                <t t-call="web.external_layout">
+
+                    <div class="page">
+
+                        <!-- Report Styling -->
+                        <style>
+                            .report-title {
+                                text-align: center;
+                                font-size: 26px;
+                                font-weight: bold;
+                                color: #875A7B;
+                                margin-bottom: 5px;
+                            }
+
+                            .report-subtitle {
+                                text-align: center;
+                                color: #666;
+                                margin-bottom: 20px;
+                            }
+
+                            .section-title {
+                                background: #875A7B;
+                                color: #FFF;
+                                padding: 8px;
+                                font-weight: bold;
+                                margin-top: 15px;
+                            }
+
+                            .info-table,
+                            .line-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 10px;
+                            }
+
+                            .info-table td,
+                            .line-table td,
+                            .line-table th {
+                                border: 1px solid #DDD;
+                                padding: 8px;
+                            }
+
+                            .line-table th {
+                                background: #875A7B;
+                                color: #FFF;
+                                text-align: left;
+                            }
+
+                            .label {
+                                background: #F5F5F5;
+                                font-weight: bold;
+                                width: 25%;
+                            }
+
+                            .total-box {
+                                margin-top: 15px;
+                                padding: 10px;
+                                border: 1px solid #DDD;
+                                background: #F8F8F8;
+                                text-align: right;
+                                font-weight: bold;
+                            }
+                            
+                        </style>
+
+                        <!-- Report Header -->
+                        <div class="report-title">
+                            Technical Order Report
+                        </div>
+
+                        <div class="report-subtitle">
+                            Technical Order Details
+                        </div>
+
+                        <div class="section-title">
+                            General Information
+                        </div>
+
+                        <table class="info-table">
+                            <tr>
+                                <td class="label">Sequence</td>
+                                <td>
+                                    <span t-field="o.sequence"/>
+                                </td>
+
+                                <td class="label">Request Name</td>
+                                <td>
+                                    <span t-field="o.request_name"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="label">Requested By</td>
+                                <td>
+                                    <span t-field="o.requested_by"/>
+                                </td>
+
+                                <td class="label">Customer</td>
+                                <td>
+                                    <span t-field="o.customer_id"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="label">Start Date</td>
+                                <td>
+                                    <span t-field="o.start_date"/>
+                                </td>
+
+                                <td class="label">End Date</td>
+                                <td>
+                                    <span t-field="o.end_date"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="label">State</td>
+                                <td>
+                                    <span t-field="o.state"/>
+                                </td>
+
+                                <td class="label">Total Price</td>
+                                <td>
+                                    <span t-field="o.total_price"/>
+                                </td>
+                            </tr>
+
+                            <tr t-if="o.rejection_reason">
+                                <td class="label">Rejection Reason</td>
+                                <td colspan="3">
+                                    <span t-field="o.rejection_reason"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="section-title">
+                            Order Lines
+                        </div>
+
+                        <table class="line-table">
+
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <tr t-foreach="o.order_line_ids" t-as="line">
+
+                                <td>
+                                    <span t-field="line.product_id"/>
+                                </td>
+
+                                <td>
+                                    <span t-field="line.description"/>
+                                </td>
+
+                                <td>
+                                    <span t-field="line.quantity"/>
+                                </td>
+
+                                <td>
+                                    <span t-field="line.price"/>
+                                </td>
+
+                                <td>
+                                    <span t-field="line.line_total"/>
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                    <div class="total-box">
+                        Total Price:
+                        <span t-field="o.total_price"/>
+                    </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    
+</odoo>

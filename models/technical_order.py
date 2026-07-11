@@ -16,7 +16,10 @@ class TechnicalOrder(models.Model):
     rejection_reason = fields.Text(string="Rejection Reason")
     order_line_ids = fields.One2many('technical.order.line',
                                       'order_id', string="OrderLines")
+    sale_order_ids = fields.One2many('sale.order', 'technical_order_id', string="Sales Orders")
     total_price = fields.Float(string="Total Price", compute="_compute_total_price", store=True)
+    has_remaining_qty = fields.Boolean(compute='_compute_has_remaining_qty')
+    sale_order_count = fields.Integer(string='Sales Orders', compute='_compute_order_count')
     state = fields.Selection([
         ('draft', 'Draft'),
         ('to_be_approved', 'To Be Approved'),
@@ -43,6 +46,43 @@ class TechnicalOrder(models.Model):
         for order in self:
             order.total_price = sum(order.order_line_ids.mapped('line_total'))
 
+    @api.depends('sale_order_ids')
+    def _compute_order_count(self):
+        """Compute the number of sales orders linked to each technical order."""
+        for rec in self:
+            rec.sale_order_count = self.env['sale.order'].search_count([
+                ('technical_order_id', '=', rec.id),
+            ])
+
+    @api.depends('order_line_ids.quantity', 'sale_order_ids.state', 'sale_order_ids.order_line.product_uom_qty')
+    def _compute_has_remaining_qty(self):
+        """
+        Compute whether the technical order still has remaining quantities
+        that can be allocated to new confirmed sales orders.
+        """
+        for rec in self:
+
+            rec.has_remaining_qty = False
+
+            confirmed_sale_orders = rec.sale_order_ids.filtered(
+                lambda so: so.state == 'sale'
+            )
+
+            confirmed_sale_lines = confirmed_sale_orders.mapped('order_line')
+
+            for line in rec.order_line_ids:
+                confirmed_qty = sum(
+                    confirmed_sale_lines.filtered(
+                        lambda sale_line: sale_line.product_id == line.product_id
+                    ).mapped('product_uom_qty')
+                )
+
+                remaining_qty = line.quantity - confirmed_qty
+
+                if remaining_qty > 0:
+                    rec.has_remaining_qty = True
+                    break
+
 
     @api.model
     def create(self, vals):
@@ -54,14 +94,14 @@ class TechnicalOrder(models.Model):
         return super().create(vals)
 
     def action_to_be_approved(self):
-        self.write({
-            'state': 'to_be_approved'
-        })
+        """Cancel the technical order."""
+
+        self.write({'state': 'to_be_approved'})
 
     def action_cancel(self):
-        self.write({
-            'state': 'cancel'
-        })
+        """Cancel the technical order."""
+        
+        self.write({'state': 'cancel'})
 
     def action_approved(self):
         """
@@ -70,9 +110,7 @@ class TechnicalOrder(models.Model):
 
         self.ensure_one()
 
-        self.write({
-            'state': 'approved'
-        })
+        self.write({'state': 'approved'})
 
         group = self.env.ref('sales_team.group_sale_manager')
 
@@ -107,9 +145,73 @@ class TechnicalOrder(models.Model):
             mail.send()
 
     def action_draft(self):
-        self.write({
-            'state': 'draft'
+        """Reset the technical order to the Draft state."""
+
+        self.write({'state': 'draft'})
+
+    def action_create_sale_order(self):
+        """
+        Create a draft sales order from the technical order.
+
+        Only the remaining quantities (after confirmed sales orders)
+        are copied into the new sales order.
+        """
+
+        self.ensure_one()
+
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.customer_id.id,
+            'technical_order_id': self.id,
         })
+
+        confirmed_sale_orders = self.sale_order_ids.filtered(
+            lambda so: so.state == 'sale'
+        )
+
+        confirmed_sale_lines = confirmed_sale_orders.mapped('order_line')
+
+        for line in self.order_line_ids:
+
+            confirmed_qty = sum(
+                confirmed_sale_lines.filtered(
+                    lambda sale_line: sale_line.product_id == line.product_id
+                ).mapped('product_uom_qty')
+            )
+
+            remaining_qty = line.quantity - confirmed_qty
+
+            if remaining_qty <= 0:
+                continue
+
+            self.env['sale.order.line'].create({
+                'order_id': sale_order.id,
+                'product_id': line.product_id.id,
+                'name': line.description or line.product_id.display_name,
+                'product_uom_qty': remaining_qty,
+                'price_unit': line.price,
+            })
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'res_id': sale_order.id,
+            'view_mode': 'form',
+        }
+
+    def action_view_sale_orders(self):
+        """Open the sales orders related to the current technical order."""
+
+        self.ensure_one()
+
+        return {
+            'name': _('Related Sales Orders'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'view_mode': 'tree,form',
+            'domain': [
+                ('technical_order_id', '=', self.id)
+            ],
+        }
 
 
 

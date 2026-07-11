@@ -5,10 +5,14 @@
     'description': """
 Technical Order Management
 
-- Create Technical Orders
-- Approval Workflow
-- Generate Sales Orders
+Features:
+- Create and manage technical orders.
+- Approval workflow with email notification.
+- Generate sales orders from approved technical orders.
+- Prevent sales order quantities from exceeding requested quantities.
+- Track related sales orders through smart buttons.
 """,
+
     'author': 'Muhamed Helmy',
     'category': 'Sales',
     'license': 'LGPL-3',
@@ -17,6 +21,7 @@ Technical Order Management
         'base',
         'product',
         'mail',
+        'sale_management',
 ],
 
     'data': [
@@ -28,6 +33,8 @@ Technical Order Management
         'views/base_menu.xml',
 
         'wizard/technical_order_wizard.xml',
+
+        'reports/technical_order.xml',
     ],
 
     'application': True,
